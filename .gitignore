@@ -1,0 +1,16 @@
+# MATLAB / Simulink generated files
+slprj/
+*.slxc
+*.asv
+*.m~
+codegen/
+sfprj/
+*_grt_rtw/
+*_ert_rtw/
+/结果数据/
+/结果图片/
+ModelA/Model_A_results/
+*.log
+*.zip
+.DS_Store
+Thumbs.db

@@ -1,0 +1,18 @@
+﻿运行
+需要MATLAB R2024b、Simulink及Optimization Toolbox。在本文件所在目录执行 compare_Model_A_B，重新生成A/B主工况、优化前ModelB、优化后ModelB的10s响应及全部PNG/FIG和性能表。
+ModelA/Model_A.slx和ModelB/Model_B.slx可分别直接打开并点击运行，初值由模型自动计算，关键Scope自动打开。两SLX的默认主工况均为0.10s投入、0.18s切除、总时长3s。单独使用run_Model_A时，应显式设置p.tClear=0.18；原参数函数的默认切除时刻保持不变。
+
+参数
+四个PI增益集中在ModelB/Model_B_parameters.m的tuned分支，并保存在SLX参数面板。baseline分支返回优化前参数。修改参数文件后执行run_Model_B即可计算；直接打开SLX运行时可修改模型内的“参数”面板。积分状态满足dξ/dt=误差，Kiv和Kic采用秒制。
+ModelA是固定对比基准。ModelB采用相同外环、虚拟电抗、LCL、网络、负荷及故障参数，前后两组仅改变四个PI增益。固定LCL所造成的故障前功角与母线电压偏置仍保留。
+
+结果与指标
+绝对值曲线使用原始输出；增量曲线分别减去各模型自身故障前稳态值。模型功角为rad，叠加图为度，其余电压、电流和功率为pu。基准为100MVA、345kV、60Hz。
+PCC使用原VT测点及网侧电流io，PCC功率为VT·conj(Io)。内源功率Pe=E·iod、Qe=-E·ioq，桥侧if用于内环反馈与内部观察。
+RMSE和相关系数使用0.2ms共同网格。峰值使用各自原始自适应步长数据。恢复时间指故障切除后进入各自故障前值±max(2%初值,0.01本量纲)并保持到3s，NaN表示3s内未满足。超限累计时间通过原始电流幅值跨越1.5pu的线性插值计算。PI误差采用dq向量范数的时间RMS及最大值。
+性能对照表中，改善百分比为100×(1-优化后/优化前)，负值表示该项误差增大。功角、PCC有功、电流和G电压绝对值RMSE降低，部分峰值、增量及内环误差存在权衡。电流峰值仍超过1.5pu，模型没有加入硬限流或削顶。
+PNG为600dpi，FIG可用openfig编辑。MAT与CSV保留完整仿真数据，PI候选记录列出完成3s计算的候选参数及指标。
+
+再次整定
+optimize_Model_B_PI与refine_PI_local用于对数增益域的局部单纯形及SQP搜索，搜索范围为基准增益的0.5～2倍。综合目标包含功角、G电压、PCC有功、电流及内环误差，PCC有功权重最高；同时约束其他主要误差及电流峰值和超限时间的退化。四个增益之外的参数在计算中保持固定。
+如需重复搜索，可先运行比较程序，再加载结果数据/typical_AB.mat中的a与bBefore，调用optimize_Model_B_PI(a,bBefore,结果目录)，随后调用refine_PI_local(a,bBefore,同一结果目录)。默认比较程序使用给定参数，不自动启动搜索。
